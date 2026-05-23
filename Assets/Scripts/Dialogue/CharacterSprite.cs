@@ -1,166 +1,186 @@
 using UnityEngine;
-using System.Collections;   
+using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using System;
 
+public enum SpriteState
+{
+    Hidden,     // SetActive(false)
+    Visible,    // fully opaque
+    FadingIn,
+    FadingOut
+}
+
 public class CharacterSprite : MonoBehaviour
 {
-    public string name;
+    public string characterName;
     public SpriteRenderer[] sprites;
 
-    public SpriteRenderer activeSprite;
-    public bool visible = false;
+    private Dictionary<string, SpriteRenderer> _spriteDict  = new Dictionary<string, SpriteRenderer>();
+    private Dictionary<string, SpriteState>    _spriteState = new Dictionary<string, SpriteState>();
+    private Dictionary<string, Tween>          _activeTween = new Dictionary<string, Tween>();
 
-    public Dictionary<string, SpriteRenderer> spriteDict = new Dictionary<string, SpriteRenderer>();
+    public SpriteRenderer activeSprite { get; private set; }
+    public SpriteRenderer defaultSprite { get; private set; }
+    public SpriteState activeState => activeSprite != null
+                                        ? _spriteState[activeSprite.name]
+                                        : SpriteState.Hidden;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        foreach (SpriteRenderer sprite in sprites)
+        foreach (SpriteRenderer sr in sprites)
         {
-            spriteDict[sprite.name] = sprite;
+            _spriteDict[sr.name]  = sr;
+            _spriteState[sr.name] = SpriteState.Hidden;
+            sr.gameObject.SetActive(false);
         }
-
-        foreach (SpriteRenderer sprite in sprites)
-        {
-            sprite.gameObject.SetActive(false);
-        }
+        defaultSprite = sprites[0];
     }
 
-    // ==================================
-    // Sprite animation functions
-    // ==================================
+    // ── Core transition ───────────────────────────────────────────
+
     public void ChangeSprite(string spriteName, bool visible = true, Action onComplete = null)
     {
-        foreach (SpriteRenderer sprite in sprites)
+        if (activeSprite != null)
+            SetHidden(activeSprite);
+
+        if (!_spriteDict.TryGetValue(spriteName, out SpriteRenderer target))
         {
-            sprite.gameObject.SetActive(false);
+            Debug.LogWarning($"[CharacterSprite] '{spriteName}' not found on {characterName}");
+            onComplete?.Invoke();
+            return;
         }
 
-        if (spriteDict.ContainsKey(spriteName))
-        {
-            activeSprite = spriteDict[spriteName];
-            activeSprite.gameObject.SetActive(visible);
-            this.visible = visible;
-            
-        }
-        else
-        {
-            Debug.LogWarning($"Sprite with name {spriteName} not found!");
-        }
+        activeSprite = target;
+        activeSprite.gameObject.SetActive(true);
+        SetAlpha(activeSprite, visible ? 1f : 0f);
+        SetState(activeSprite, visible ? SpriteState.Visible : SpriteState.Hidden);
         onComplete?.Invoke();
     }
 
-    public void FadeInSprite(float duration, Action onComplete = null)
+    public void Hide(string spriteName = null, Action onComplete = null)
     {
-        if (activeSprite != null)
-        {
-            StartCoroutine(FadeInCoroutine(activeSprite, duration, onComplete: onComplete));
-        }
-        else
-        {
-            Debug.LogWarning($"No active sprite to fade in!");
-        }
+        SpriteRenderer sr = ResolveSprite(spriteName);
+        if (sr == null) return;
+
+        SetHidden(sr);
+
+        if (activeSprite == sr)
+            activeSprite = null;
+
+        onComplete?.Invoke();
     }
 
-    public void FadeOutSprite(float duration, Action onComplete = null)
+    public void FadeIn(float duration, string spriteName = null, Action onComplete = null)
     {
-        if (activeSprite != null)
-        {
-            StartCoroutine(FadeOutCoroutine(activeSprite, duration, onComplete: onComplete));
-        }
-        else
-        {
-            Debug.LogWarning($"No active sprite to fade out!");
-        }
-    }
+        // sprite starts invisible before fading in
+        SpriteRenderer sr = ResolveSprite(spriteName, visible: false);
 
-    public void JumpSprite(float duration, float jumpPower, int numJumps, Action onComplete = null)
-    {
-        if (activeSprite != null)
-        {
-            StartCoroutine(Jump(activeSprite, duration, jumpPower, numJumps, onComplete));
-        }
-        else
-        {
-            Debug.LogWarning($"No active sprite to jump!");
-        }
-    }
+        if (_spriteState[sr.name] == SpriteState.Visible) { onComplete?.Invoke(); return; }
 
-    // ==================================
-    // Sprite animation coroutines
-    // ==================================
+        KillTween(sr);
+        SetState(sr, SpriteState.FadingIn);
+        sr.gameObject.SetActive(true);
+        SetAlpha(sr, 0f);
 
-    IEnumerator FadeInCoroutine(SpriteRenderer sprite, float duration, float delay = 0f, Action onComplete = null)
-    {
-        sprite.gameObject.SetActive(true);
-        sprite.color = new Color(
-                sprite.color.r,
-                sprite.color.g,
-                sprite.color.b, 0f);
-
-        sprite
-            .DOFade(1f, duration)
-            .SetDelay(delay)
+        var tween = sr.DOFade(1f, duration)
             .SetEase(Ease.InOutQuad)
             .OnComplete(() => {
-                sprite.color = new Color(
-                    sprite.color.r,
-                    sprite.color.g,
-                    sprite.color.b, 1f);
-                Debug.Log("Fade in complete");
+                SetState(sr, SpriteState.Visible);
                 onComplete?.Invoke();
-                visible = true;
             });
-        
-        yield return null;
+
+        _activeTween[sr.name] = tween;
     }
 
-    IEnumerator FadeOutCoroutine(SpriteRenderer sprite, float duration, float delay = 0f, Action onComplete = null)
+    public void FadeOut(float duration, string spriteName = null, Action onComplete = null)
     {
-        sprite.gameObject.SetActive(true);
-        sprite.color = new Color(
-                sprite.color.r,
-                sprite.color.g,
-                sprite.color.b, 1f);
+        SpriteRenderer sr = ResolveSprite(spriteName, visible: true);
 
-        sprite
-            .DOFade(0f, duration)
-            .SetDelay(delay)
+        if (_spriteState[sr.name] == SpriteState.Hidden) { onComplete?.Invoke(); return; }
+
+        KillTween(sr);
+        SetState(sr, SpriteState.FadingOut);
+
+        var tween = sr.DOFade(0f, duration)
             .SetEase(Ease.InOutQuad)
             .OnComplete(() => {
-                sprite.color = new Color(
-                    sprite.color.r,
-                    sprite.color.g,
-                    sprite.color.b, 0f);
+                SetHidden(sr);
                 onComplete?.Invoke();
-                visible = false;
             });
-        
-        yield return null;
 
+        _activeTween[sr.name] = tween;
     }
 
-    IEnumerator Jump(SpriteRenderer sprite, float duration, float jumpPower, int numJumps, Action onComplete = null)
+    public void Jump(float duration, float jumpPower, int numJumps, string spriteName = null, Action onComplete = null)
     {
-        Vector3 originalPosition = sprite.transform.position;
+        SpriteRenderer sr = ResolveSprite(spriteName, visible: true);
 
-        sprite
-            .transform
-            .DOJump(
-                originalPosition,
-                jumpPower,
-                numJumps,
-                duration)
+        Vector3 originalPos = sr.transform.position;
+
+        sr.transform
+            .DOJump(originalPos, jumpPower, numJumps, duration)
             .SetEase(Ease.OutQuad)
             .OnComplete(() => {
-                sprite.transform.position = originalPosition;
+                sr.transform.position = originalPos;
                 onComplete?.Invoke();
             });
-
-        yield return null;
     }
 
+    // ── Utility ───────────────────────────────────────────────────
 
+    // ── Resolve sprite ────────────────────────────────────────────
+
+    /// <summary>
+    /// Resolves which sprite to use:
+    /// 1. Named sprite if provided
+    /// 2. Current active sprite
+    /// 3. Default sprite as fallback
+    /// If a named sprite is provided and differs from active, switches to it first.
+    /// </summary>
+    private SpriteRenderer ResolveSprite(string spriteName, bool visible = true)
+    {
+        // named sprite provided
+        if (!string.IsNullOrEmpty(spriteName))
+        {
+            if (_spriteDict.TryGetValue(spriteName, out SpriteRenderer named))
+            {
+                if (activeSprite != named)
+                    ChangeSprite(spriteName, visible);
+                return named;
+            }
+            Debug.LogWarning($"[CharacterSprite] '{spriteName}' not found, falling back.");
+        }
+
+        // use active sprite if available
+        if (activeSprite != null)
+            return activeSprite;
+
+        // fallback to default
+        Debug.LogWarning($"[CharacterSprite] No active sprite, falling back to default.");
+        ChangeSprite(defaultSprite.name, visible);
+        return defaultSprite;
+    }
+
+    private void SetHidden(SpriteRenderer sr)
+    {
+        KillTween(sr);
+        sr.gameObject.SetActive(false);
+        SetAlpha(sr, 0f);
+        SetState(sr, SpriteState.Hidden);
+    }
+
+    private void SetState(SpriteRenderer sr, SpriteState state)
+        => _spriteState[sr.name] = state;
+
+    private void SetAlpha(SpriteRenderer sr, float alpha)
+        => sr.color = new Color(sr.color.r, sr.color.g, sr.color.b, alpha);
+
+    private void KillTween(SpriteRenderer sr)
+    {
+        if (_activeTween.TryGetValue(sr.name, out Tween t) && t.IsActive())
+            t.Kill();
+        _activeTween.Remove(sr.name);
+    }
 }

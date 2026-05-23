@@ -39,8 +39,7 @@
           "characterName": "angel",
           "jumpPower": 1.7,
           "numJumps": 1,
-          "duration": 0.4,
-          "preDelay": 3.0
+          "duration": 0.4
         }
       ]
     },

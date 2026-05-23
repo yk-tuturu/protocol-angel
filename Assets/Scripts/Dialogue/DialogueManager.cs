@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 using System;
+using DG.Tweening;
 
 public class DialogueManager : MonoBehaviour
 {
@@ -10,25 +11,25 @@ public class DialogueManager : MonoBehaviour
     public bool currentlyInDialogue = false;
     public bool currentlyTyping = false;
 
+    public bool showUI = false;
+
     public string currentSpeaker;
     public string currentSentence;
 
     public TextMeshProUGUI speakerText;
     public TextMeshProUGUI speechText;
-    public GameObject dialoguePanel;
+    public CanvasGroup dialoguePanel;
 
     public float textDelay = 0.02f;
 
-    public static DialogueManager Instance { get; private set; }
-
     private Action _onComplete;
 
-    void Awake()
+    void Start()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
+        showUI = false;
+        dialoguePanel.gameObject.SetActive(false);
+        speakerText.text = "";
+        speechText.text = "";
     }
 
     void OnEnable()
@@ -66,18 +67,62 @@ public class DialogueManager : MonoBehaviour
         speechText.text = "";
     }
 
-    public void ShowPanel()
+    public void ShowPanel(float duration = 0f, Action onComplete = null)
     {
-        dialoguePanel.SetActive(true);
+        if (showUI) return;
+
+        if (duration > 0f)
+        {
+            dialoguePanel.gameObject.SetActive(true);
+            dialoguePanel.alpha = 0f;
+            dialoguePanel
+                .DOFade(1f, duration)
+                .OnComplete(() =>
+                {
+                    showUI = true;
+                    onComplete?.Invoke();
+                });
+        } 
+        else
+        {
+            dialoguePanel.gameObject.SetActive(true);
+            showUI = true;
+            onComplete?.Invoke();
+        }
+        
+        
     }
 
-    public void HidePanel()
+    public void HidePanel(float duration = 0f, Action onComplete = null)
     {
-        dialoguePanel.SetActive(false);
+        if (duration > 0f)
+        {
+            
+            dialoguePanel.alpha = 1f;
+            dialoguePanel
+                .DOFade(0f, duration)
+                .OnComplete(() =>
+                {
+                    dialoguePanel.gameObject.SetActive(false);
+                    showUI = false;
+                    onComplete?.Invoke();
+                });
+        }
+        else
+        {
+            dialoguePanel.gameObject.SetActive(false);
+            showUI = false;
+            onComplete?.Invoke();
+        }
     }
 
     public void DisplayNextSentence(string speaker, string sentence, float textDelay = 0.02f, Action onComplete = null)
     {
+        if (!showUI)
+        {
+            ShowPanel();
+        }
+
         _onComplete = onComplete;
         currentSpeaker = speaker;
         currentSentence = sentence;
@@ -87,12 +132,12 @@ public class DialogueManager : MonoBehaviour
 
         currentlyInDialogue = true;
         StopAllCoroutines();
-        StartCoroutine(TypeSentence(sentence));
+        StartCoroutine(TypeSentence(speaker, sentence));
     }
 
-    IEnumerator TypeSentence(string sentence)
+    IEnumerator TypeSentence(string speaker,string sentence)
     {
-        speechText.text = "";
+        speakerText.text = speaker;
         currentlyTyping = true;
 
         float timer = 0f;
@@ -106,6 +151,7 @@ public class DialogueManager : MonoBehaviour
             int charsToShow = Mathf.FloorToInt(timer / textDelay);
             charsToShow = Mathf.Min(charsToShow, letters.Length);
 
+            speakerText.text = speaker;
             speechText.text = sentence.Substring(0, charsToShow);
             charIndex = charsToShow;
 
@@ -126,5 +172,6 @@ public class DialogueManager : MonoBehaviour
         Action callback = _onComplete;
         _onComplete = null;         
         callback?.Invoke();
+        currentlyInDialogue = false;
     }
 }

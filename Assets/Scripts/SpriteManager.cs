@@ -46,11 +46,11 @@ public class SpriteManager : MonoBehaviour
         }
     }
 
-    public void FadeInSprite(string characterName, string spriteName, float duration, Action onComplete = null)
+    public void ShowSprite(string characterName, string spriteName, Action onComplete = null)
     {
         if (characterDict.ContainsKey(characterName))
         {
-            characterDict[characterName].FadeInSprite(duration, onComplete);
+            characterDict[characterName].ChangeSprite(spriteName, visible: true, onComplete: onComplete);
         }
         else
         {
@@ -58,11 +58,11 @@ public class SpriteManager : MonoBehaviour
         }
     }
 
-    public void FadeOutSprite(string characterName, string spriteName, float duration, Action onComplete = null)
+    public void HideSprite(string characterName, string spriteName, Action onComplete = null)
     {
         if (characterDict.ContainsKey(characterName))
         {
-            characterDict[characterName].FadeOutSprite(duration, onComplete);
+            characterDict[characterName].Hide(spriteName, onComplete);
         }
         else
         {
@@ -70,11 +70,35 @@ public class SpriteManager : MonoBehaviour
         }
     }
 
-    public void JumpSprite(string characterName, string spriteName, float duration, float jumpPower, int numJumps, Action onComplete = null)
+    public void FadeIn(string characterName, string spriteName, float duration, Action onComplete = null)
     {
         if (characterDict.ContainsKey(characterName))
         {
-            characterDict[characterName].JumpSprite(duration, jumpPower, numJumps, onComplete);
+            characterDict[characterName].FadeIn(duration, spriteName,onComplete);
+        }
+        else
+        {
+            Debug.LogWarning($"Character with name {characterName} not found!");
+        }
+    }
+
+    public void FadeOut(string characterName, string spriteName, float duration, Action onComplete = null)
+    {
+        if (characterDict.ContainsKey(characterName))
+        {
+            characterDict[characterName].FadeOut(duration, spriteName, onComplete);
+        }
+        else
+        {
+            Debug.LogWarning($"Character with name {characterName} not found!");
+        }
+    }
+
+    public void Jump(string characterName, string spriteName, float duration, float jumpPower, int numJumps, Action onComplete = null)
+    {
+        if (characterDict.ContainsKey(characterName))
+        {
+            characterDict[characterName].Jump(duration, jumpPower, numJumps, spriteName, onComplete);
         }
         else
         {

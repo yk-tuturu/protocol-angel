@@ -24,7 +24,7 @@ public class StepManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        LoadSceneFromJson("testScene.json");
+        LoadSceneFromJson("prologue.json");
 
         ExecuteNextStep();
     }
@@ -89,6 +89,12 @@ public class StepManager : MonoBehaviour
             case DialogueStepType.Jump:
                 HandleJumpStep(step, onComplete);
                 break;
+            case DialogueStepType.ShowSprite:
+                HandleShowSpriteStep(step, onComplete);
+                break;
+            case DialogueStepType.HideSprite:
+                HandleHideSpriteStep(step, onComplete);
+                break;
             default:
                 Debug.LogWarning("Unknown step type!");
                 break;
@@ -107,6 +113,16 @@ public class StepManager : MonoBehaviour
         {
             SpriteManager.Instance.ChangeSprite(step.characterName, step.spriteName);
         }
+    }
+
+    private void HandleShowSpriteStep(Step step, Action onComplete)
+    {
+        SpriteManager.Instance.ShowSprite(step.characterName, step.spriteName, () => onComplete());
+    }
+
+    private void HandleHideSpriteStep(Step step, Action onComplete)
+    {
+        SpriteManager.Instance.HideSprite(step.characterName, step.spriteName, () => onComplete());
     }
 
     private void HandleChangeSpriteStep(Step step, Action onComplete)
@@ -138,36 +154,21 @@ public class StepManager : MonoBehaviour
 
     private void HandleFadeInStep(Step fadeInStep, Action onComplete)
     {
-        if (!string.IsNullOrEmpty(fadeInStep.characterName) && !string.IsNullOrEmpty(fadeInStep.spriteName))
-        {
-            SpriteManager.Instance.ChangeSprite(fadeInStep.characterName, fadeInStep.spriteName, visible: false);
-        }
-
-        SpriteManager.Instance.FadeInSprite(
+        SpriteManager.Instance.FadeIn(
             fadeInStep.characterName, fadeInStep.spriteName, fadeInStep.duration,
             () => onComplete?.Invoke());
     }
 
     private void HandleFadeOutStep(Step fadeOutStep, Action onComplete)
     {
-        if (!string.IsNullOrEmpty(fadeOutStep.characterName) && !string.IsNullOrEmpty(fadeOutStep.spriteName))
-        {
-            SpriteManager.Instance.ChangeSprite(fadeOutStep.characterName, fadeOutStep.spriteName, visible: true);
-        }
-
-        SpriteManager.Instance.FadeOutSprite(
+        SpriteManager.Instance.FadeOut(
             fadeOutStep.characterName, fadeOutStep.spriteName, fadeOutStep.duration,
             () => onComplete?.Invoke());
     }
 
     private void HandleJumpStep(Step jumpStep, Action onComplete)
     {
-        if (!string.IsNullOrEmpty(jumpStep.characterName) && !string.IsNullOrEmpty(jumpStep.spriteName))
-        {
-            SpriteManager.Instance.ChangeSprite(jumpStep.characterName, jumpStep.spriteName);
-        }
-
-        SpriteManager.Instance.JumpSprite(
+        SpriteManager.Instance.Jump(
             jumpStep.characterName, jumpStep.spriteName, jumpStep.duration, jumpStep.jumpPower, jumpStep.numJumps, 
             () => onComplete?.Invoke());
     }
@@ -191,6 +192,10 @@ public class StepManager : MonoBehaviour
                 return DialogueStepType.FadeOut;
             case "jump":
                 return DialogueStepType.Jump;
+            case "showsprite":
+                return DialogueStepType.ShowSprite;
+            case "hidesprite":
+                return DialogueStepType.HideSprite;
             default:
                 Debug.LogWarning($"Unknown step type: {type}");
                 return DialogueStepType.Dialogue; // default to dialogue

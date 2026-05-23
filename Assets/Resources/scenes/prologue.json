@@ -1,0 +1,31 @@
+{
+  "steps": [
+    {
+      "type": "showsprite",
+      "characterName": "blackscreen",
+      "spriteName": "blackscreen"
+    },
+    {
+      "type": "simultaneous",
+      "steps": [
+        {
+          "type": "fadeout",
+          "duration": 3,
+          "characterName": "blackscreen",
+          "spriteName": "blackscreen"
+        },
+        {
+          "type": "showsprite",
+          "characterName": "bg",
+          "spriteName": "bg"
+        }
+      ]
+    },
+    {
+      "type": "fadein",
+      "duration": 1,
+      "characterName": "angel",
+      "spriteName": "sprite1"
+    }
+  ]
+}
