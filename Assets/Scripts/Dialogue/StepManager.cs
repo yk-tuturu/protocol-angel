@@ -40,7 +40,7 @@ public class StepManager : MonoBehaviour
     }
 
     // wrapper to handle delays
-    IEnumerator ExecuteWithDelay(Step step, Action onComplete = null)
+    IEnumerator ExecuteWithDelay(Step step, Action onComplete = null, bool isSubstep = false)
     {
         if (step.preDelay > 0f)
         {
@@ -57,6 +57,12 @@ public class StepManager : MonoBehaviour
         }
 
         onComplete?.Invoke();
+
+        if (!isSubstep)
+        {
+            GameEventManager.Raise_EndStep(currentStep);
+        }
+
         yield return null;
     }
 
@@ -124,10 +130,9 @@ public class StepManager : MonoBehaviour
         {
             StartCoroutine(ExecuteWithDelay(subStep, () => {
                 completed++;
-                Debug.Log($"Completed simultaneous substep {completed}/{total}");
                 if (completed >= total)
                     onComplete?.Invoke();
-            }));
+            }, isSubstep: true));
         }
     }
 

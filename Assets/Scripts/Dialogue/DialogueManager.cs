@@ -34,11 +34,13 @@ public class DialogueManager : MonoBehaviour
     void OnEnable()
     {
         InputManager.Instance.OnClick += HandleClick;
+        GameEventManager.EndStep += HandleEndStep;
     }
 
     void OnDisable()
     {
         InputManager.Instance.OnClick -= HandleClick;
+        GameEventManager.EndStep -= HandleEndStep;
     }
 
     void HandleClick(InputManager.ClickData data)
@@ -53,11 +55,15 @@ public class DialogueManager : MonoBehaviour
             }
             else
             {
-                speakerText.text = "";
-                speechText.text = "";
                 CompleteLine();
             }
         }
+    }
+
+    void HandleEndStep(Step step)
+    {
+        speakerText.text = "";
+        speechText.text = "";
     }
 
     public void ShowPanel()
