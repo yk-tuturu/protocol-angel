@@ -1,0 +1,56 @@
+{
+  "steps": [
+    {
+      "type": "fadeIn",
+      "characterName": "angel",
+      "spriteName": "sprite1",
+      "duration": 1.0
+    },
+    {
+      "type": "dialogue",
+      "speaker": "Angel",
+      "sentence": "Hi, this is Doctor Angel"
+    },
+    {
+      "type": "dialogue",
+      "speaker": "Angel",
+      "sentence": "I am changing sprites!",
+      "characterName": "angel",
+      "spriteName": "sprite2"
+    },
+    {
+      "type": "dialogue",
+      "speaker": "Angel",
+      "sentence": "I am changing sprites again!",
+      "characterName": "angel",
+      "spriteName": "sprite1"
+    },
+    {
+      "type": "simultaneous",
+      "steps": [
+        {
+          "type": "dialogue",
+          "speaker": "Angel",
+          "sentence": "I am jumping!"
+        },
+        {
+          "type": "jump",
+          "characterName": "angel",
+          "jumpPower": 1.7,
+          "numJumps": 1,
+          "duration": 0.4
+        }
+      ]
+    },
+    {
+      "type": "dialogue",
+      "speaker": "Angel",
+      "sentence": "Ok gotta go now byee"
+    },
+    {
+      "type": "fadeOut",
+      "characterName": "angel",
+      "duration": 1.0
+    }
+  ]
+}

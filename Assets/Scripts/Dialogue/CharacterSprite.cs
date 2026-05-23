@@ -2,11 +2,15 @@ using UnityEngine;
 using System.Collections;   
 using System.Collections.Generic;
 using DG.Tweening;
+using System;
 
 public class CharacterSprite : MonoBehaviour
 {
     public string name;
     public SpriteRenderer[] sprites;
+
+    public SpriteRenderer activeSprite;
+    public bool visible = false;
 
     public Dictionary<string, SpriteRenderer> spriteDict = new Dictionary<string, SpriteRenderer>();
 
@@ -24,7 +28,7 @@ public class CharacterSprite : MonoBehaviour
         }
     }
 
-    public void ChangeSprite(string spriteName)
+    public void ChangeSprite(string spriteName, bool visible = true, Action onComplete = null)
     {
         foreach (SpriteRenderer sprite in sprites)
         {
@@ -33,43 +37,55 @@ public class CharacterSprite : MonoBehaviour
 
         if (spriteDict.ContainsKey(spriteName))
         {
-            spriteDict[spriteName].gameObject.SetActive(true);
+            activeSprite = spriteDict[spriteName];
+            activeSprite.gameObject.SetActive(visible);
+            this.visible = visible;
+            
         }
         else
         {
             Debug.LogWarning($"Sprite with name {spriteName} not found!");
         }
-
-        GameEventManager.Raise_NextStep();
+        onComplete?.Invoke();
     }
 
-    public void FadeInSprite(string spriteName, float duration)
+    public void FadeInSprite(float duration, Action onComplete = null)
     {
-        if (spriteDict.ContainsKey(spriteName))
+        if (activeSprite != null)
         {
-            SpriteRenderer sprite = spriteDict[spriteName];
-            StartCoroutine(FadeInCoroutine(sprite, duration));
+            StartCoroutine(FadeInCoroutine(activeSprite, duration, onComplete: onComplete));
         }
         else
         {
-            Debug.LogWarning($"Sprite with name {spriteName} not found!");
+            Debug.LogWarning($"No active sprite to fade in!");
         }
     }
 
-    public void FadeOutSprite(string spriteName, float duration)
+    public void FadeOutSprite(float duration, Action onComplete = null)
     {
-        if (spriteDict.ContainsKey(spriteName))
+        if (activeSprite != null)
         {
-            SpriteRenderer sprite = spriteDict[spriteName];
-            StartCoroutine(FadeOutCoroutine(sprite, duration));
+            StartCoroutine(FadeOutCoroutine(activeSprite, duration, onComplete: onComplete));
         }
         else
         {
-            Debug.LogWarning($"Sprite with name {spriteName} not found!");
+            Debug.LogWarning($"No active sprite to fade out!");
         }
     }
 
-    IEnumerator FadeInCoroutine(SpriteRenderer sprite, float duration, float delay = 0f)
+    public void JumpSprite(float duration, float jumpPower, int numJumps, Action onComplete = null)
+    {
+        if (activeSprite != null)
+        {
+            StartCoroutine(Jump(activeSprite, duration, jumpPower, numJumps, onComplete));
+        }
+        else
+        {
+            Debug.LogWarning($"No active sprite to jump!");
+        }
+    }
+
+    IEnumerator FadeInCoroutine(SpriteRenderer sprite, float duration, float delay = 0f, Action onComplete = null)
     {
         sprite.gameObject.SetActive(true);
         sprite.color = new Color(
@@ -86,13 +102,15 @@ public class CharacterSprite : MonoBehaviour
                     sprite.color.r,
                     sprite.color.g,
                     sprite.color.b, 1f);
-                GameEventManager.Raise_NextStep();
+                Debug.Log("Fade in complete");
+                onComplete?.Invoke();
+                visible = true;
             });
         
         yield return null;
     }
 
-    IEnumerator FadeOutCoroutine(SpriteRenderer sprite, float duration, float delay = 0f)
+    IEnumerator FadeOutCoroutine(SpriteRenderer sprite, float duration, float delay = 0f, Action onComplete = null)
     {
         sprite.gameObject.SetActive(true);
         sprite.color = new Color(
@@ -109,11 +127,32 @@ public class CharacterSprite : MonoBehaviour
                     sprite.color.r,
                     sprite.color.g,
                     sprite.color.b, 0f);
-                GameEventManager.Raise_NextStep();
+                onComplete?.Invoke();
+                visible = false;
             });
         
         yield return null;
 
+    }
+
+    IEnumerator Jump(SpriteRenderer sprite, float duration, float jumpPower, int numJumps, Action onComplete = null)
+    {
+        Vector3 originalPosition = sprite.transform.position;
+
+        sprite
+            .transform
+            .DOJump(
+                originalPosition,
+                jumpPower,
+                numJumps,
+                duration)
+            .SetEase(Ease.OutQuad)
+            .OnComplete(() => {
+                sprite.transform.position = originalPosition;
+                onComplete?.Invoke();
+            });
+
+        yield return null;
     }
 
 

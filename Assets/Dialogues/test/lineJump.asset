@@ -9,8 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4699e43852b93374fb1662b92faae47f, type: 3}
-  m_Name: simul1
-  m_EditorClassIdentifier: Assembly-CSharp::SimultaneousStepSO
-  steps:
-  - {fileID: 11400000, guid: 61ef9171c3a18b24ea2f46b3d64af823, type: 2}
+  m_Script: {fileID: 11500000, guid: 850623e155bee4d4cb5c334578b2da7c, type: 3}
+  m_Name: lineJump
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueStepSO
+  speaker: Angel
+  sentence: I'm jumping!
+  simultaneousSteps: []

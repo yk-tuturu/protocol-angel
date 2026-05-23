@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 /**
 * Stupid hack, but this is a list mapping character names to their corresponding sprite object 
 */
@@ -33,11 +34,11 @@ public class SpriteManager : MonoBehaviour
         }   
     }
 
-    public void ChangeSprite(string characterName, string spriteName)
+    public void ChangeSprite(string characterName, string spriteName, bool visible = true, Action onComplete = null)
     {
         if (characterDict.ContainsKey(characterName))
         {
-            characterDict[characterName].ChangeSprite(spriteName);
+            characterDict[characterName].ChangeSprite(spriteName, visible: visible, onComplete: onComplete);
         }
         else
         {
@@ -45,11 +46,11 @@ public class SpriteManager : MonoBehaviour
         }
     }
 
-    public void FadeInSprite(string characterName, string spriteName, float duration)
+    public void FadeInSprite(string characterName, string spriteName, float duration, Action onComplete = null)
     {
         if (characterDict.ContainsKey(characterName))
         {
-            characterDict[characterName].FadeInSprite(spriteName, duration);
+            characterDict[characterName].FadeInSprite(duration, onComplete);
         }
         else
         {
@@ -57,11 +58,23 @@ public class SpriteManager : MonoBehaviour
         }
     }
 
-    public void FadeOutSprite(string characterName, string spriteName, float duration)
+    public void FadeOutSprite(string characterName, string spriteName, float duration, Action onComplete = null)
     {
         if (characterDict.ContainsKey(characterName))
         {
-            characterDict[characterName].FadeOutSprite(spriteName, duration);
+            characterDict[characterName].FadeOutSprite(duration, onComplete);
+        }
+        else
+        {
+            Debug.LogWarning($"Character with name {characterName} not found!");
+        }
+    }
+
+    public void JumpSprite(string characterName, string spriteName, float duration, float jumpPower, int numJumps, Action onComplete = null)
+    {
+        if (characterDict.ContainsKey(characterName))
+        {
+            characterDict[characterName].JumpSprite(duration, jumpPower, numJumps, onComplete);
         }
         else
         {

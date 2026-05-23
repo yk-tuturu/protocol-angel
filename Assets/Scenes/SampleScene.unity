@@ -342,7 +342,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: New Text
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -966,6 +966,7 @@ MonoBehaviour:
   speakerText: {fileID: 272111124}
   speechText: {fileID: 1821250180}
   dialoguePanel: {fileID: 671184052}
+  textDelay: 0.02
 --- !u!4 &788263561
 Transform:
   m_ObjectHideFlags: 0
@@ -1090,6 +1091,7 @@ MonoBehaviour:
   sprites:
   - {fileID: 23155823}
   - {fileID: 1746128327}
+  currentSprite: {fileID: 0}
 --- !u!4 &1712770486
 Transform:
   m_ObjectHideFlags: 0
@@ -1254,7 +1256,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: helo
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

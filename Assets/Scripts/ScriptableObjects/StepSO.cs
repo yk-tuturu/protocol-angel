@@ -6,7 +6,8 @@ public enum DialogueStepType
     ChangeSprite,
     Simultaneous,
     FadeIn,
-    FadeOut
+    FadeOut,
+    Jump
 }
 
 [CreateAssetMenu(fileName = "StepSO", menuName = "Scriptable Objects/StepSO")]

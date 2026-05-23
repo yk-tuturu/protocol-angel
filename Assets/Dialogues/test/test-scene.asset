@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SceneSO
   steps:
   - {fileID: 11400000, guid: b6b37177981494141a50cad888a17f13, type: 2}
-  - {fileID: 11400000, guid: 787921de6829d5548a19577e266c603d, type: 2}
+  - {fileID: 11400000, guid: 61ef9171c3a18b24ea2f46b3d64af823, type: 2}
   - {fileID: 11400000, guid: 9d6f2b292ccc0f746af0c9f1c9401590, type: 2}
   - {fileID: 11400000, guid: 99c7500eb468fbf4fa12e5172deb3358, type: 2}
+  - {fileID: 11400000, guid: 8644d67630a967642b0bfe1581444d3b, type: 2}
   - {fileID: 11400000, guid: c6a7e84c4b19ecb4680d3d2db3dd4049, type: 2}
   - {fileID: 11400000, guid: 0cfd1d343f7d9f441b5afcb4b2cc1e94, type: 2}
