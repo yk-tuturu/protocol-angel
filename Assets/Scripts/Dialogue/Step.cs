@@ -29,6 +29,10 @@ public class Substep
     // jump 
     public float jumpPower;
     public int numJumps;
+
+    // pre and post-delay -- common to all steps
+    public float preDelay = 0f;
+    public float postDelay = 0f;
 }
 
 [System.Serializable]

@@ -28,6 +28,9 @@ public class CharacterSprite : MonoBehaviour
         }
     }
 
+    // ==================================
+    // Sprite animation functions
+    // ==================================
     public void ChangeSprite(string spriteName, bool visible = true, Action onComplete = null)
     {
         foreach (SpriteRenderer sprite in sprites)
@@ -84,6 +87,10 @@ public class CharacterSprite : MonoBehaviour
             Debug.LogWarning($"No active sprite to jump!");
         }
     }
+
+    // ==================================
+    // Sprite animation coroutines
+    // ==================================
 
     IEnumerator FadeInCoroutine(SpriteRenderer sprite, float duration, float delay = 0f, Action onComplete = null)
     {

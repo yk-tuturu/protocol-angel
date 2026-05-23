@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Collections;
 using System;
 
 public class StepManager : MonoBehaviour
@@ -34,31 +35,53 @@ public class StepManager : MonoBehaviour
         {
             currentStep = stepQueue.Dequeue();
             currentStepType = currentStep.stepType;
-            Execute(currentStep);
+            StartCoroutine(ExecuteWithDelay(currentStep, ExecuteNextStep));
         }
     }
 
-    void Execute(Step step)
+    // wrapper to handle delays
+    IEnumerator ExecuteWithDelay(Step step, Action onComplete = null)
+    {
+        if (step.preDelay > 0f)
+        {
+            yield return new WaitForSeconds(step.preDelay);
+        }
+
+        bool done = false;
+        Execute(step, () => done = true);
+        yield return new WaitUntil(() => done);
+
+        if (step.postDelay > 0f)
+        {
+            yield return new WaitForSeconds(step.postDelay);
+        }
+
+        onComplete?.Invoke();
+        yield return null;
+    }
+
+    // actual execution logic 
+    void Execute(Step step, Action onComplete)
     {
         switch (step.stepType)
         {
             case DialogueStepType.Dialogue:
-                HandleDialogueStep(step);
+                HandleDialogueStep(step, onComplete);
                 break;
             case DialogueStepType.ChangeSprite:
-                HandleChangeSpriteStep(step);
+                HandleChangeSpriteStep(step, onComplete);
                 break;
             case DialogueStepType.Simultaneous:
-                HandleSimultaneousStep(step);
+                HandleSimultaneousStep(step, onComplete);
                 break;
             case DialogueStepType.FadeIn:
-                HandleFadeInStep(step);
+                HandleFadeInStep(step, onComplete);
                 break;
             case DialogueStepType.FadeOut:
-                HandleFadeOutStep(step);
+                HandleFadeOutStep(step, onComplete);
                 break;
             case DialogueStepType.Jump:
-                HandleJumpStep(step);
+                HandleJumpStep(step, onComplete);
                 break;
             default:
                 Debug.LogWarning("Unknown step type!");
@@ -66,29 +89,13 @@ public class StepManager : MonoBehaviour
         }
     }
 
-    void OnStepComplete()
-    {
-        if (currentStepType == DialogueStepType.Simultaneous)
-        {
-            simultaneousStepsExecuted++;
+    
 
-            if (simultaneousStepsExecuted >= totalSimultaneousSteps)
-            {
-                ExecuteNextStep();
-            }
-        } 
-        
-        else
-        {
-            ExecuteNextStep();
-        }
-    }
-
-    private void HandleDialogueStep(Step step)
+    private void HandleDialogueStep(Step step, Action onComplete)
     {
         DialogueManager.Instance.DisplayNextSentence(
             step.speaker, step.sentence, step.textDelay,
-            () => OnStepComplete());
+            () => onComplete?.Invoke());
 
         if (!string.IsNullOrEmpty(step.characterName) && !string.IsNullOrEmpty(step.spriteName))
         {
@@ -96,23 +103,35 @@ public class StepManager : MonoBehaviour
         }
     }
 
-    private void HandleChangeSpriteStep(Step step)
+    private void HandleChangeSpriteStep(Step step, Action onComplete)
     {
-        SpriteManager.Instance.ChangeSprite(step.characterName, step.spriteName, true, () => OnStepComplete());
+        SpriteManager.Instance.ChangeSprite(step.characterName, step.spriteName, true, () => onComplete());
     }
 
-    private void HandleSimultaneousStep(Step step)
-    {   
-        Debug.Log(step.steps);
-        simultaneousStepsExecuted = 0;
-        totalSimultaneousSteps = step.steps.Length;
+    private void HandleSimultaneousStep(Step step, Action onComplete)
+    {
+        if (step.steps == null || step.steps.Length == 0)
+        {
+            Debug.LogWarning("Simultaneous step has no substeps!");
+            onComplete?.Invoke();
+            return;
+        }
+
+        int total = step.steps.Length;
+        int completed = 0;
+
         foreach (Step subStep in step.steps)
         {
-            Execute(subStep);
+            StartCoroutine(ExecuteWithDelay(subStep, () => {
+                completed++;
+                Debug.Log($"Completed simultaneous substep {completed}/{total}");
+                if (completed >= total)
+                    onComplete?.Invoke();
+            }));
         }
     }
 
-    private void HandleFadeInStep(Step fadeInStep)
+    private void HandleFadeInStep(Step fadeInStep, Action onComplete)
     {
         if (!string.IsNullOrEmpty(fadeInStep.characterName) && !string.IsNullOrEmpty(fadeInStep.spriteName))
         {
@@ -121,10 +140,10 @@ public class StepManager : MonoBehaviour
 
         SpriteManager.Instance.FadeInSprite(
             fadeInStep.characterName, fadeInStep.spriteName, fadeInStep.duration,
-            () => OnStepComplete());
+            () => onComplete?.Invoke());
     }
 
-    private void HandleFadeOutStep(Step fadeOutStep)
+    private void HandleFadeOutStep(Step fadeOutStep, Action onComplete)
     {
         if (!string.IsNullOrEmpty(fadeOutStep.characterName) && !string.IsNullOrEmpty(fadeOutStep.spriteName))
         {
@@ -133,10 +152,10 @@ public class StepManager : MonoBehaviour
 
         SpriteManager.Instance.FadeOutSprite(
             fadeOutStep.characterName, fadeOutStep.spriteName, fadeOutStep.duration,
-            () => OnStepComplete());
+            () => onComplete?.Invoke());
     }
 
-    private void HandleJumpStep(Step jumpStep)
+    private void HandleJumpStep(Step jumpStep, Action onComplete)
     {
         if (!string.IsNullOrEmpty(jumpStep.characterName) && !string.IsNullOrEmpty(jumpStep.spriteName))
         {
@@ -145,7 +164,7 @@ public class StepManager : MonoBehaviour
 
         SpriteManager.Instance.JumpSprite(
             jumpStep.characterName, jumpStep.spriteName, jumpStep.duration, jumpStep.jumpPower, jumpStep.numJumps, 
-            () => OnStepComplete());
+            () => onComplete?.Invoke());
     }
 
     // ==================================
@@ -187,7 +206,9 @@ public class StepManager : MonoBehaviour
             spriteName = subStep.spriteName,
             duration = subStep.duration,
             jumpPower = subStep.jumpPower,
-            numJumps = subStep.numJumps
+            numJumps = subStep.numJumps,
+            preDelay = subStep.preDelay,
+            postDelay = subStep.postDelay
         };
 
         return step;

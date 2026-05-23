@@ -9,7 +9,8 @@
     {
       "type": "dialogue",
       "speaker": "Angel",
-      "sentence": "Hi, this is Doctor Angel"
+      "sentence": "Hi, this is Doctor Angel",
+      "preDelay": 1.0
     },
     {
       "type": "dialogue",
@@ -38,7 +39,8 @@
           "characterName": "angel",
           "jumpPower": 1.7,
           "numJumps": 1,
-          "duration": 0.4
+          "duration": 0.4,
+          "preDelay": 3.0
         }
       ]
     },

@@ -28,13 +28,7 @@ public class DialogueManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
         }
-        else
-        {
-            Destroy(gameObject);
-        }
-        // sentences = new Queue<Dialogue>();
     }
 
     void OnEnable()
@@ -103,14 +97,13 @@ public class DialogueManager : MonoBehaviour
         {
             timer += Time.deltaTime;
 
-            // how many chars should have appeared by now
             int charsToShow = Mathf.FloorToInt(timer / textDelay);
             charsToShow = Mathf.Min(charsToShow, letters.Length);
 
             speechText.text = sentence.Substring(0, charsToShow);
             charIndex = charsToShow;
 
-            yield return null; // run every frame, no WaitForSeconds
+            yield return null; 
         }
 
         currentlyTyping = false;
@@ -120,15 +113,12 @@ public class DialogueManager : MonoBehaviour
     {
         Debug.Log("End of conversation");
         currentlyInDialogue = false;
-
-        speakerText.text = "";
-        speechText.text = "";
     }
 
     void CompleteLine()
     {
         Action callback = _onComplete;
-        _onComplete = null;         // clear first so double-clicks can't fire it twice
+        _onComplete = null;         
         callback?.Invoke();
     }
 }
