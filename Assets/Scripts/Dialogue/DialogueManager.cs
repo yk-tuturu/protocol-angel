@@ -20,20 +20,26 @@ public class DialogueManager : MonoBehaviour
     public TextMeshProUGUI speechText;
     public CanvasGroup dialoguePanel;
 
-    public float textDelay = 0.02f;
+    public float textDelay = 0.01f;
+    public bool append = false; // if true, the current sentence will not be cleared when a new line is displayed
 
     private Action _onComplete;
 
     void Start()
     {
         showUI = false;
-        dialoguePanel.gameObject.SetActive(false);
+        dialoguePanel.alpha = 0f;
         speakerText.text = "";
         speechText.text = "";
+        currentSpeaker = "";
+        currentSentence = "";
+        currentlyInDialogue = false;
+        currentlyTyping = false;
     }
 
     void OnEnable()
     {
+        Debug.Log("DialogueManager OnEnable");
         InputManager.Instance.OnClick += HandleClick;
         GameEventManager.EndStep += HandleEndStep;
     }
@@ -51,7 +57,7 @@ public class DialogueManager : MonoBehaviour
             if (currentlyTyping)
             {
                 StopAllCoroutines();
-                speechText.text = currentSentence;
+                speechText.maxVisibleCharacters = int.MaxValue; 
                 currentlyTyping = false;
             }
             else
@@ -63,8 +69,12 @@ public class DialogueManager : MonoBehaviour
 
     void HandleEndStep(Step step)
     {
-        speakerText.text = "";
-        speechText.text = "";
+        if (!append)
+        {
+            speakerText.text = "";
+            speechText.text = "";
+            speechText.maxVisibleCharacters = 0;
+        }
     }
 
     public void ShowPanel(float duration = 0f, Action onComplete = null)
@@ -85,38 +95,51 @@ public class DialogueManager : MonoBehaviour
         } 
         else
         {
+            Debug.Log("Showing dialogue panel immediately");
             dialoguePanel.gameObject.SetActive(true);
+            dialoguePanel.alpha = 1f;
             showUI = true;
             onComplete?.Invoke();
-        }
-        
-        
+        } 
     }
 
     public void HidePanel(float duration = 0f, Action onComplete = null)
     {
         if (duration > 0f)
         {
-            
             dialoguePanel.alpha = 1f;
             dialoguePanel
                 .DOFade(0f, duration)
                 .OnComplete(() =>
                 {
                     dialoguePanel.gameObject.SetActive(false);
+                    ClearDialogue();
                     showUI = false;
                     onComplete?.Invoke();
                 });
         }
         else
         {
+            dialoguePanel.alpha = 0f;
             dialoguePanel.gameObject.SetActive(false);
+            ClearDialogue();
             showUI = false;
             onComplete?.Invoke();
         }
     }
 
-    public void DisplayNextSentence(string speaker, string sentence, float textDelay = 0.02f, Action onComplete = null)
+    // not sure if this will be needed, can prolly encode a function for this in json
+    public void ClearDialogue(Action onComplete = null)
+    {
+        speakerText.text = "";
+        speechText.text = "";
+        speechText.maxVisibleCharacters = 0;
+        currentSpeaker = "";
+        currentSentence = "";
+        onComplete?.Invoke();
+    }
+
+    public void DisplayNextSentence(string speaker, string sentence, float textDelay = 0.01f, bool append = false, Action onComplete = null)
     {
         if (!showUI)
         {
@@ -127,6 +150,7 @@ public class DialogueManager : MonoBehaviour
         currentSpeaker = speaker;
         currentSentence = sentence;
         this.textDelay = textDelay;
+        this.append = append;
 
         speakerText.text = speaker;
 
@@ -135,36 +159,45 @@ public class DialogueManager : MonoBehaviour
         StartCoroutine(TypeSentence(speaker, sentence));
     }
 
-    IEnumerator TypeSentence(string speaker,string sentence)
+    IEnumerator TypeSentence(string speaker, string sentence)
     {
         speakerText.text = speaker;
         currentlyTyping = true;
 
-        float timer = 0f;
-        int charIndex = 0;
-        char[] letters = sentence.ToCharArray();
+        speechText.text += sentence;  
+        speechText.ForceMeshUpdate();
+        int totalChars = speechText.textInfo.characterCount;      
+        int prevMaxVisible = speechText.maxVisibleCharacters;
 
-        while (charIndex < letters.Length)
+        Debug.Log($"Total characters in sentence: {totalChars}, starting from: {prevMaxVisible}");
+
+        for (int i = prevMaxVisible + 1; i <= totalChars; i++)
         {
-            timer += Time.deltaTime;
-
-            int charsToShow = Mathf.FloorToInt(timer / textDelay);
-            charsToShow = Mathf.Min(charsToShow, letters.Length);
-
-            speakerText.text = speaker;
-            speechText.text = sentence.Substring(0, charsToShow);
-            charIndex = charsToShow;
-
-            yield return null; 
+            speechText.maxVisibleCharacters = i;
+            yield return new WaitForSeconds(textDelay);
         }
 
         currentlyTyping = false;
     }
 
-    public void EndDialogue()
+    public int GetSentenceLength(string sentence)
     {
-        Debug.Log("End of conversation");
-        currentlyInDialogue = false;
+        int counter = 0;
+        for (int i = 0; i < sentence.Length; i++)
+        {
+            if (sentence[i] == '<')
+            {
+                int closingIndex = sentence.IndexOf('>', i);
+                if (closingIndex != -1)
+                {
+                    i = closingIndex; 
+                    continue;
+                }
+            }
+
+            counter++;
+        }
+        return counter;
     }
 
     void CompleteLine()

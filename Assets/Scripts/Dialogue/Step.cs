@@ -11,6 +11,7 @@ public class Step : Substep
 [System.Serializable]
 public class Substep
 {
+    public string id;
     public string type;
     public DialogueStepType stepType;
 
@@ -18,6 +19,8 @@ public class Substep
     public string speaker;
     public string sentence;
     public float textDelay = 0.02f;
+    public string dialoguePanel = "default"; 
+    public bool append = false; 
 
     // if present, this step will also change sprites
     public string characterName; 
@@ -33,6 +36,34 @@ public class Substep
     // pre and post-delay -- common to all steps
     public float preDelay = 0f;
     public float postDelay = 0f;
+
+    // choices
+    public string choiceId;
+    public Choice[] choices;
+
+    // jump target 
+    public string jumpTargetId;
+
+    // setFlag
+    public string flag;
+
+    // conditional jump
+    public Condition[] conditions;
+    public string defaultJumpTargetId;
+}
+
+public class Choice
+{
+    public string id;
+    public string text;
+    public string jumpTargetId;
+    public string hideOnFlag;
+}
+
+public class Condition
+{
+    public string[] flags;
+    public string jumpTargetId;
 }
 
 [System.Serializable]

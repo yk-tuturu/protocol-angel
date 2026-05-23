@@ -10,12 +10,22 @@ public class StepManager : MonoBehaviour
     public Scene scene;
 
     public Queue<Step> stepQueue = new Queue<Step>();
+    public List<Step> stepList = new List<Step>();
+
+    public Dictionary<string, int> stepIdToIndex = new Dictionary<string, int>();
+
+    public int stepIndex = 0;
 
     public Step currentStep;
     public DialogueStepType currentStepType;
 
     public int simultaneousStepsExecuted = 0;
     public int totalSimultaneousSteps = 0;
+
+    // Dialogue managers
+    // this probably shouldnt be managed here but for now its fine ig
+    public DialogueManager defaultDialogueManager;
+    public DialogueManager blackDialogueManager;
 
     private void Awake()
     {
@@ -31,9 +41,9 @@ public class StepManager : MonoBehaviour
 
     private void ExecuteNextStep()
     {
-        if (stepQueue.Count > 0)
+        if (stepList.Count > 0)
         {
-            currentStep = stepQueue.Dequeue();
+            currentStep = stepList[stepIndex];
             currentStepType = currentStep.stepType;
             StartCoroutine(ExecuteWithDelay(currentStep, ExecuteNextStep));
         }
@@ -56,12 +66,23 @@ public class StepManager : MonoBehaviour
             yield return new WaitForSeconds(step.postDelay);
         }
 
-        onComplete?.Invoke();
-
         if (!isSubstep)
         {
+            Debug.Log($"Raising EndStep event for step: {step.type}");
             GameEventManager.Raise_EndStep(currentStep);
         }
+
+        // handling jumps and branching logic 
+        if (currentStep.jumpTargetId != null)
+        {
+            stepIndex = stepIdToIndex[currentStep.jumpTargetId];
+        }
+        else if (!isSubstep && currentStepType != DialogueStepType.Choice) 
+        {
+            stepIndex++;
+        }
+
+        onComplete?.Invoke();
 
         yield return null;
     }
@@ -95,18 +116,47 @@ public class StepManager : MonoBehaviour
             case DialogueStepType.HideSprite:
                 HandleHideSpriteStep(step, onComplete);
                 break;
+            case DialogueStepType.ShowPanel:
+                HandleShowPanelStep(step, onComplete);
+                break;
+            case DialogueStepType.HidePanel:
+                HandleHidePanelStep(step, onComplete);
+                break;
+            case DialogueStepType.ClearDialogue:
+                HandleClearDialogueStep(step, onComplete);
+                break;
+            case DialogueStepType.SetFlag:
+                HandleSetFlagStep(step, onComplete);
+                break;
             default:
                 Debug.LogWarning("Unknown step type!");
                 break;
         }
     }
-
     
+    //================================
+    // Dialogue related handlers
+    // ===============================
+    private DialogueManager GetDialogueManager(string dialoguePanel)
+    {
+        switch (dialoguePanel.ToLower())
+        {
+            case "default":
+                return defaultDialogueManager;
+            case "black":
+                return blackDialogueManager;
+            default:
+                Debug.LogWarning($"Unknown dialogue panel: {dialoguePanel}, defaulting to defaultDialogueManager");
+                return defaultDialogueManager;
+        }
+    }
 
     private void HandleDialogueStep(Step step, Action onComplete)
     {
-        DialogueManager.Instance.DisplayNextSentence(
-            step.speaker, step.sentence, step.textDelay,
+        var dialogueManager = GetDialogueManager(step.dialoguePanel);
+
+        dialogueManager.DisplayNextSentence(
+            step.speaker, step.sentence, step.textDelay, step.append,
             () => onComplete?.Invoke());
 
         if (!string.IsNullOrEmpty(step.characterName) && !string.IsNullOrEmpty(step.spriteName))
@@ -115,21 +165,28 @@ public class StepManager : MonoBehaviour
         }
     }
 
-    private void HandleShowSpriteStep(Step step, Action onComplete)
+    private void HandleShowPanelStep(Step step, Action onComplete)
     {
-        SpriteManager.Instance.ShowSprite(step.characterName, step.spriteName, () => onComplete());
+        var dialogueManager = GetDialogueManager(step.dialoguePanel);
+        dialogueManager.ShowPanel(step.duration, () => onComplete());
     }
 
-    private void HandleHideSpriteStep(Step step, Action onComplete)
+    private void HandleClearDialogueStep(Step step, Action onComplete)
     {
-        SpriteManager.Instance.HideSprite(step.characterName, step.spriteName, () => onComplete());
+        var dialogueManager = GetDialogueManager(step.dialoguePanel);
+        dialogueManager.ClearDialogue(() => onComplete());
     }
 
-    private void HandleChangeSpriteStep(Step step, Action onComplete)
+    private void HandleHidePanelStep(Step step, Action onComplete)
     {
-        SpriteManager.Instance.ChangeSprite(step.characterName, step.spriteName, true, () => onComplete());
+        var dialogueManager = GetDialogueManager(step.dialoguePanel);
+        dialogueManager.HidePanel(step.duration, () => onComplete());
     }
 
+    // ================================
+    // Simultaneous step handler
+    // ================================
+    
     private void HandleSimultaneousStep(Step step, Action onComplete)
     {
         if (step.steps == null || step.steps.Length == 0)
@@ -152,6 +209,25 @@ public class StepManager : MonoBehaviour
         }
     }
 
+    //================================
+    // Sprite related handlers
+    // ===============================
+    private void HandleShowSpriteStep(Step step, Action onComplete)
+    {
+        SpriteManager.Instance.ShowSprite(step.characterName, step.spriteName, () => onComplete());
+    }
+
+    private void HandleHideSpriteStep(Step step, Action onComplete)
+    {
+        SpriteManager.Instance.HideSprite(step.characterName, step.spriteName, () => onComplete());
+    }
+
+    private void HandleChangeSpriteStep(Step step, Action onComplete)
+    {
+        SpriteManager.Instance.ChangeSprite(step.characterName, step.spriteName, true, () => onComplete());
+    }
+
+
     private void HandleFadeInStep(Step fadeInStep, Action onComplete)
     {
         SpriteManager.Instance.FadeIn(
@@ -171,6 +247,15 @@ public class StepManager : MonoBehaviour
         SpriteManager.Instance.Jump(
             jumpStep.characterName, jumpStep.spriteName, jumpStep.duration, jumpStep.jumpPower, jumpStep.numJumps, 
             () => onComplete?.Invoke());
+    }
+
+    //================================
+    // Branching handlers
+    // ===============================
+    private void HandleSetFlagStep(Step step, Action onComplete)
+    {
+        FlagManager.Instance.SetFlag(step.flag, true);
+        onComplete?.Invoke();
     }
 
     // ==================================
@@ -196,6 +281,18 @@ public class StepManager : MonoBehaviour
                 return DialogueStepType.ShowSprite;
             case "hidesprite":
                 return DialogueStepType.HideSprite;
+            case "showpanel":
+                return DialogueStepType.ShowPanel;
+            case "hidepanel":
+                return DialogueStepType.HidePanel;
+            case "cleardialogue":
+                return DialogueStepType.ClearDialogue;
+            case "setflag":
+                return DialogueStepType.SetFlag;
+            case "conditionaljump":
+                return DialogueStepType.ConditionalJump;
+            case "choice":
+                return DialogueStepType.Choice;
             default:
                 Debug.LogWarning($"Unknown step type: {type}");
                 return DialogueStepType.Dialogue; // default to dialogue
@@ -218,7 +315,15 @@ public class StepManager : MonoBehaviour
             jumpPower = subStep.jumpPower,
             numJumps = subStep.numJumps,
             preDelay = subStep.preDelay,
-            postDelay = subStep.postDelay
+            postDelay = subStep.postDelay,
+            dialoguePanel = subStep.dialoguePanel,
+            append = subStep.append,
+            choiceId = subStep.choiceId,
+            choices = subStep.choices,
+            jumpTargetId = subStep.jumpTargetId,
+            flag = subStep.flag,
+            conditions = subStep.conditions,
+            defaultJumpTargetId = subStep.defaultJumpTargetId
         };
 
         return step;
@@ -249,7 +354,14 @@ public class StepManager : MonoBehaviour
                     step.steps[i] = simultaneousStep;
                 }
             }
+
+            stepList.Add(step);
             stepQueue.Enqueue(step);
+
+            if (step.id != null)
+            {
+                stepIdToIndex[step.id] = stepList.Count - 1;
+            }
         }
     }
 }

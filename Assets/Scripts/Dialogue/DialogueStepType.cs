@@ -7,5 +7,11 @@ public enum DialogueStepType
     FadeOut,
     Jump,
     ShowSprite,
-    HideSprite
+    HideSprite,
+    ShowPanel,
+    HidePanel,
+    ClearDialogue,
+    SetFlag,
+    ConditionalJump,
+    Choice
 }

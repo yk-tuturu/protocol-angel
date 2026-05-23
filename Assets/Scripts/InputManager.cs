@@ -32,10 +32,15 @@ public class InputManager : MonoBehaviour
     // ─────────────────────────────────────────────────────────────
     void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
-
+        if (Instance == null)
+        {
+            Debug.Log("InputManager Awake");
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
         _camera = Camera.main;
 
         _pointerPositionAction = new InputAction("PointerPosition", binding: "<Pointer>/position");

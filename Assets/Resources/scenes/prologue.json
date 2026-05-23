@@ -6,6 +6,40 @@
       "spriteName": "blackscreen"
     },
     {
+      "type": "dialogue",
+      "dialoguePanel": "black",
+      "speaker": "",
+      "sentence": "\"Each had six wings: with two he covered his face, ",
+      "append": true
+    },
+    {
+      "type": "dialogue",
+      "dialoguePanel": "black",
+      "speaker": "",
+      "sentence": "and with two he covered his feet, ",
+      "append": true
+    },
+    {
+      "type": "dialogue",
+      "dialoguePanel": "black",
+      "speaker": "",
+      "sentence": "and with two he flew.\"",
+      "append": true
+    },
+    {
+      "type": "dialogue",
+      "dialoguePanel": "black",
+      "speaker": "",
+      "sentence": "\n<align=\"right\">- Isaiah 6:2",
+      "append": true
+    },
+    {
+      "type": "hidePanel",
+      "dialoguePanel": "black",
+      "duration": 3,
+      "postDelay": 2
+    },
+    {
       "type": "simultaneous",
       "steps": [
         {
@@ -22,10 +56,173 @@
       ]
     },
     {
-      "type": "fadein",
-      "duration": 1,
-      "characterName": "angel",
-      "spriteName": "sprite1"
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "The hush of rain permeates the air, carrying in a cool breeze.",
+      "jumpTargetId": "test"
+    },
+    {
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "A pristine glass door stands unassumingly along a narrow corridor, with an aluminium shutter folded neatly at the top."
+    },
+    {
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "The interior is obscured by the condensation clouding the glass, yet one could vaguely make out movement occasionally stirring within."
+    },
+    {
+      "id": "test",
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "..."
+    },
+    {
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "The door opens. A bell above it jingles softly."
+    },
+    {
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "A figure steps in, shaking rainwater from their umbrella."
+    },
+    {
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "The room is small. Somewhere deeper within, a machine emits a soft, intermittent beep."
+    },
+    {
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "A reception counter sits empty at the side, cluttered with items."
+    },
+    {
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "What would you like to examine?"
+    },
+    {
+      "id": "prologueChoice",
+      "type": "choice",
+      "choiceId": "prologueChoice",
+      "choices": [
+        {
+          "id": "nameCard",
+          "text": "Name Card",
+          "jumpTargetId": "nameCard",
+          "hideOnFlag": "nameCard"
+        },
+        {
+          "id": "wallPlague",
+          "text": "Wall Plague",
+          "jumpTargetId": "plague",
+          "hideOnFlag": "plague"
+        },
+        {
+          "id": "poster",
+          "text": "Poster",
+          "jumpTargetId": "poster",
+          "hideOnFlag": "poster"
+        }
+      ],
+      "choiceEndJumpTargetId": "prologueChoiceEnd"
+    },
+    {
+      "id": "nameCard",
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "A box of name cards sits quaintly at the corner of the desk."
+    },
+    {
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "Upon inspection. the words etched on it read: \"Dr Angel. Medical Practitioner and Surgeon. Board Certified.\""
+    },
+    {
+      "type": "setFlag",
+      "flag": "nameCard",
+      "jumpTargetId": "prologueChoiceRepeat"
+    },
+    {
+      "id": "plague",
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "On a metal plaque on the wall, black engravings fill the frame: "
+    },
+    {
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "“★★★★★ Dr Angel cured my 9-to-5 back pains, she’s a miracle worker!” "
+    },
+    {
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "“★★★★★ Effective and thoughtful doctor. I can’t stop coming back.”"
+    },
+    {
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "“★★★★ Dr Angel fixed my wisdom tooth.”"
+    },
+    {
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "“★★★★★ I cannot believe this level of service is all free!”"
+    },
+    {
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "“★★★★★ I cannot believe this level of service is all free!”"
+    },
+    {
+      "type": "setFlag",
+      "flag": "plague",
+      "jumpTargetId": "prologueChoiceRepeat"
+    },
+    {
+      "id": "poster",
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "A poster hangs on a wall beside a desk."
+    },
+    {
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "Above a smiling baby cherub in scrubs, bold words inscribe:"
+    },
+    {
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "“A doctor’s duty is to make all your pesky maladies disappear!”"
+    },
+    {
+      "type": "setFlag",
+      "flag": "poster",
+      "jumpTargetId": "prologueChoiceRepeat"
+    },
+    {
+      "id": "prologueChoiceRepeat",
+      "type": "conditionalJump",
+      "conditions": [
+        { "flags": ["nameCard", "plague", "poster"], 
+          "jumpTargetId": "prologueChoiceEnd" 
+        }
+      ],
+      "defaultJumpTargetId": "prologueChoiceContinue"
+    },
+    {
+      "id": "prologueChoiceContinue",
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "Is there anything else you would like to examine?",
+      "jumpTargetId": "prologueChoice"
+    },
+    {
+      "id": "prologueChoiceEnd",
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "It seems like the doctor here is well reputed."
     }
   ]
 }
