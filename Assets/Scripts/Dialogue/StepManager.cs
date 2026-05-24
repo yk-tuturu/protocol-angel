@@ -27,6 +27,8 @@ public class StepManager : MonoBehaviour
     public DialogueManager defaultDialogueManager;
     public DialogueManager blackDialogueManager;
 
+    public ChoiceManager choiceManager;
+
     private void Awake()
     {
         Instance = this;
@@ -77,7 +79,7 @@ public class StepManager : MonoBehaviour
         {
             stepIndex = stepIdToIndex[currentStep.jumpTargetId];
         }
-        else if (!isSubstep && currentStepType != DialogueStepType.Choice) 
+        else if (!isSubstep && currentStepType != DialogueStepType.Choice) // dont increment if is choice, since choice steps will handle their own jumps
         {
             stepIndex++;
         }
@@ -127,6 +129,12 @@ public class StepManager : MonoBehaviour
                 break;
             case DialogueStepType.SetFlag:
                 HandleSetFlagStep(step, onComplete);
+                break;
+            case DialogueStepType.Choice:
+                HandleChoiceStep(step, onComplete);
+                break;
+            case DialogueStepType.ConditionalJump:
+                HandleConditionalJumpStep(step, onComplete);
                 break;
             default:
                 Debug.LogWarning("Unknown step type!");
@@ -255,6 +263,50 @@ public class StepManager : MonoBehaviour
     private void HandleSetFlagStep(Step step, Action onComplete)
     {
         FlagManager.Instance.SetFlag(step.flag, true);
+        onComplete?.Invoke();
+    }
+
+    private void HandleChoiceStep(Step step, Action onComplete)
+    {
+        choiceManager.ShowChoices(step.choices, choiceId => {
+            Choice selectedChoice = Array.Find(step.choices, c => c.id == choiceId);
+            if (selectedChoice != null)
+            {
+                step.jumpTargetId = selectedChoice.jumpTargetId;
+            }
+            else
+            {
+                Debug.LogWarning($"Selected choice ID {choiceId} not found in choices!");
+            }
+
+            onComplete?.Invoke();
+        });
+    }
+
+    private void HandleConditionalJumpStep(Step step, Action onComplete)
+    {
+        foreach (Condition condition in step.conditions)
+        {
+            bool allFlagsSet = true;
+            foreach (string flag in condition.flags)
+            {
+                if (!FlagManager.Instance.GetFlag(flag))
+                {
+                    allFlagsSet = false;
+                    break;
+                }
+            }
+
+            if (allFlagsSet)
+            {
+                step.jumpTargetId = condition.jumpTargetId;
+                onComplete?.Invoke();
+                return;
+            }
+        }
+
+        // if no conditions met, jump to default
+        step.jumpTargetId = step.defaultJumpTargetId;
         onComplete?.Invoke();
     }
 

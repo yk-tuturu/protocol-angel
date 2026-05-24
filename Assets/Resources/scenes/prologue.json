@@ -171,11 +171,6 @@
       "sentence": "“★★★★★ I cannot believe this level of service is all free!”"
     },
     {
-      "type": "dialogue",
-      "speaker": "",
-      "sentence": "“★★★★★ I cannot believe this level of service is all free!”"
-    },
-    {
       "type": "setFlag",
       "flag": "plague",
       "jumpTargetId": "prologueChoiceRepeat"
@@ -223,6 +218,54 @@
       "type": "dialogue",
       "speaker": "",
       "sentence": "It seems like the doctor here is well reputed."
+    },
+    {
+      "type": "dialogue",
+      "speaker": "Patient",
+      "sentence": "Hello? Are you open?"
+    },
+    {
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "Silence, before…"
+    },
+    {
+      "type": "dialogue",
+      "speaker": "???",
+      "sentence": "Yes, come in."
+    },
+    {
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "A soft, gentle voice resounds from beyond a door further in that is left ajar."
+    },
+    {
+      "type": "dialogue",
+      "speaker": "Patient",
+      "sentence": "Are you Dr Angel?"
+    },
+    {
+      "type": "simultaneous",
+      "steps": [
+        {
+          "type": "dialogue",
+          "speaker": "DR ANGEL",
+          "sentence": "I am."
+        },
+        {
+          "type": "fadein",
+          "characterName": "angel",
+          "spriteName": "sprite1",
+          "duration": 0.4
+        }
+      ]
+    },
+    {
+      "type": "dialogue",
+      "speaker": "",
+      "sentence": "The figure hesitates."
     }
+    
+    
   ]
 }

@@ -52,6 +52,7 @@ public class Substep
     public string defaultJumpTargetId;
 }
 
+[System.Serializable]
 public class Choice
 {
     public string id;
@@ -60,6 +61,7 @@ public class Choice
     public string hideOnFlag;
 }
 
+[System.Serializable]
 public class Condition
 {
     public string[] flags;

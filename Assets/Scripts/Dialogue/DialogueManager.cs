@@ -15,6 +15,7 @@ public class DialogueManager : MonoBehaviour
 
     public string currentSpeaker;
     public string currentSentence;
+    public int currentSentenceLength;
 
     public TextMeshProUGUI speakerText;
     public TextMeshProUGUI speechText;
@@ -57,7 +58,8 @@ public class DialogueManager : MonoBehaviour
             if (currentlyTyping)
             {
                 StopAllCoroutines();
-                speechText.maxVisibleCharacters = int.MaxValue; 
+                Debug.Log($"Typing sentence length: {currentSentenceLength}");
+                speechText.maxVisibleCharacters = currentSentenceLength;
                 currentlyTyping = false;
             }
             else
@@ -74,6 +76,9 @@ public class DialogueManager : MonoBehaviour
             speakerText.text = "";
             speechText.text = "";
             speechText.maxVisibleCharacters = 0;
+            currentSpeaker = "";
+            currentSentence = "";
+            currentSentenceLength = 0;
         }
     }
 
@@ -136,6 +141,7 @@ public class DialogueManager : MonoBehaviour
         speechText.maxVisibleCharacters = 0;
         currentSpeaker = "";
         currentSentence = "";
+        currentSentenceLength = 0;
         onComplete?.Invoke();
     }
 
@@ -148,7 +154,7 @@ public class DialogueManager : MonoBehaviour
 
         _onComplete = onComplete;
         currentSpeaker = speaker;
-        currentSentence = sentence;
+        currentSentence += sentence;
         this.textDelay = textDelay;
         this.append = append;
 
@@ -156,7 +162,7 @@ public class DialogueManager : MonoBehaviour
 
         currentlyInDialogue = true;
         StopAllCoroutines();
-        StartCoroutine(TypeSentence(speaker, sentence));
+        StartCoroutine(TypeSentence(currentSpeaker, currentSentence));
     }
 
     IEnumerator TypeSentence(string speaker, string sentence)
@@ -164,9 +170,15 @@ public class DialogueManager : MonoBehaviour
         speakerText.text = speaker;
         currentlyTyping = true;
 
-        speechText.text += sentence;  
+        Debug.Log($"Typing sentence: {sentence}");
+        Debug.Log($"Current speechText before typing: {speechText.text}");
+        Debug.Log($"Current maxVisibleCharacters: {speechText.maxVisibleCharacters}");
+
+        speechText.text = sentence;  
         speechText.ForceMeshUpdate();
-        int totalChars = speechText.textInfo.characterCount;      
+        int totalChars = speechText.textInfo.characterCount;
+        currentSentenceLength = totalChars;
+              
         int prevMaxVisible = speechText.maxVisibleCharacters;
 
         Debug.Log($"Total characters in sentence: {totalChars}, starting from: {prevMaxVisible}");
@@ -180,25 +192,25 @@ public class DialogueManager : MonoBehaviour
         currentlyTyping = false;
     }
 
-    public int GetSentenceLength(string sentence)
-    {
-        int counter = 0;
-        for (int i = 0; i < sentence.Length; i++)
-        {
-            if (sentence[i] == '<')
-            {
-                int closingIndex = sentence.IndexOf('>', i);
-                if (closingIndex != -1)
-                {
-                    i = closingIndex; 
-                    continue;
-                }
-            }
+    // public int GetSentenceLength(string sentence)
+    // {
+    //     int counter = 0;
+    //     for (int i = 0; i < sentence.Length; i++)
+    //     {
+    //         if (sentence[i] == '<')
+    //         {
+    //             int closingIndex = sentence.IndexOf('>', i);
+    //             if (closingIndex != -1)
+    //             {
+    //                 i = closingIndex; 
+    //                 continue;
+    //             }
+    //         }
 
-            counter++;
-        }
-        return counter;
-    }
+    //         counter++;
+    //     }
+    //     return counter;
+    // }
 
     void CompleteLine()
     {

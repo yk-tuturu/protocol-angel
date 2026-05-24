@@ -2,6 +2,11 @@ using UnityEngine;
 
 public class FlagManager : MonoBehaviour
 {
+    public string[] flagsToResetOnStart = new string[] {
+        "nameCard",
+        "plague",
+        "poster"
+    };
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     public static FlagManager Instance { get; private set; }
 
@@ -15,6 +20,15 @@ public class FlagManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(this.gameObject);
+        }
+    }
+
+    void Start()
+    {
+        // Reset specified flags on start
+        foreach (string flag in flagsToResetOnStart)
+        {
+            SetFlag(flag, false);
         }
     }
 
