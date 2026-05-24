@@ -58,8 +58,7 @@
     {
       "type": "dialogue",
       "speaker": "",
-      "sentence": "The hush of rain permeates the air, carrying in a cool breeze.",
-      "jumpTargetId": "test"
+      "sentence": "The hush of rain permeates the air, carrying in a cool breeze."
     },
     {
       "type": "dialogue",
@@ -72,7 +71,6 @@
       "sentence": "The interior is obscured by the condensation clouding the glass, yet one could vaguely make out movement occasionally stirring within."
     },
     {
-      "id": "test",
       "type": "dialogue",
       "speaker": "",
       "sentence": "..."
@@ -264,6 +262,135 @@
       "type": "dialogue",
       "speaker": "",
       "sentence": "The figure hesitates."
+    },
+    {
+      "type": "dialogue",
+      "speaker": "Patient",
+      "sentence": "I heard this place helps people."
+    },
+    {
+      "type": "dialogue",
+      "speaker": "Dr Angel",
+      "sentence": "...",
+      "characterName": "angel",
+      "spriteName": "sprite2"
+    },
+    {
+      "type": "dialogue",
+      "speaker": "Dr Angel",
+      "sentence": "We try our best",
+      "characterName": "angel",
+      "spriteName": "sprite1"
+    }, 
+    {
+      "type": "simultaneous",
+      "steps": [
+        {
+          "type": "hidePanel",
+          "dialoguePanel": "default",
+          "duration": 2
+        },
+        {
+          "type": "fadein",
+          "characterName": "blackscreen",
+          "spriteName": "blackscreen",
+          "duration": 3,
+          "postDelay": 2
+        }
+      ]
+    },
+    {
+      "type": "dialogue",
+      "dialoguePanel": "scp",
+      "speaker": "",
+      "sentence": "<b>Anomaly Report #AN-999</b>\n<i>drafted by</i> █████████",
+      "append": "true"
+    },
+    {
+      "type": "dialogue",
+      "dialoguePanel": "scp",
+      "speaker": "",
+      "sentence": "\n\nAN-999 is a clinic located in the abandoned apartment complex ██████ ███ in ███ ███, located on the ground floor. Preliminary surveys have found that the clinic is locked with shutters on all days of the week except for Sundays. ",
+      "append": "true"
+    },
+    {
+      "type": "dialogue",
+      "dialoguePanel": "scp",
+      "speaker": "",
+      "sentence": "When the shutters are lifted, there is a glass door leading into a room with white walls, wooden flooring, and a reception counter typical of a family clinic. ",
+      "append": "true"
+    },
+    {
+      "type": "dialogue",
+      "dialoguePanel": "scp",
+      "speaker": "",
+      "sentence": "\n\nThere is no trace of the clinic in physical or online advertisements. ",
+      "append": "true"
+    }, 
+    {
+      "type": "dialogue",
+      "dialoguePanel": "scp",
+      "speaker": "",
+      "sentence": "Victims who have visited the clinic cannot recall where they heard about the clinic from, while some do not remember visiting it at all, leading researchers to suspect an antimemetic agent at play. ",
+      "append": "true"
+    },
+    {
+      "type": "dialogue",
+      "dialoguePanel": "scp",
+      "speaker": "",
+      "sentence": "\n\nCurrently, most victims have not reported any abnormalities, yet many refuse to discuss, or have trouble recalling, the treatment that they have received at the clinic. ",
+      "append": "true"
+    },
+
+    {
+      "type": "dialogue",
+      "dialoguePanel": "scp",
+      "speaker": "",
+      "sentence": "A select few reporting anomalous outcomes express an intense, persistent and unexplainable desire to return*. Taking that into account, the anomaly will be temporarily classified as [PENDING]. ",
+      "append": "true"
+    },
+    {
+      "type": "dialogue",
+      "dialoguePanel": "scp",
+      "speaker": "",
+      "sentence": "<i>\n\n* Reported individuals have been placed in quarantine.</i>"
+    },
+    {
+      "type": "dialogue",
+      "dialoguePanel": "scp",
+      "speaker": "",
+      "sentence": "Researcher notes: ",
+      "append": "true"
+    },
+    {
+      "type": "dialogue",
+      "dialoguePanel": "scp",
+      "speaker": "",
+      "sentence": "\n\nNo personnel has attempted to enter the clinic yet. Probably because no one wants to work on a Sunday. ",
+      "append": "true"
+    },
+    {
+      "type": "dialogue",
+      "dialoguePanel": "scp",
+      "speaker": "",
+      "sentence": "\n\nI’ll give it a look. Something about this feels off.",
+      "append": "true"
+    },
+    {
+      "type": "simultaneous",
+      "steps": [
+        {
+          "type": "hidePanel",
+          "dialoguePanel": "scp",
+          "duration": 2
+        },
+        {
+          "type": "fadein",
+          "spriteName": "blackscreen",
+          "characterName": "blackscreen",
+          "duration": 2.5
+        }
+      ]
     }
     
     

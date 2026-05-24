@@ -26,6 +26,7 @@ public class StepManager : MonoBehaviour
     // this probably shouldnt be managed here but for now its fine ig
     public DialogueManager defaultDialogueManager;
     public DialogueManager blackDialogueManager;
+    public DialogueManager scpDialogueManager;
 
     public ChoiceManager choiceManager;
 
@@ -43,7 +44,7 @@ public class StepManager : MonoBehaviour
 
     private void ExecuteNextStep()
     {
-        if (stepList.Count > 0)
+        if (stepIndex < stepList.Count)
         {
             currentStep = stepList[stepIndex];
             currentStepType = currentStep.stepType;
@@ -153,6 +154,8 @@ public class StepManager : MonoBehaviour
                 return defaultDialogueManager;
             case "black":
                 return blackDialogueManager;
+            case "scp":
+                return scpDialogueManager;
             default:
                 Debug.LogWarning($"Unknown dialogue panel: {dialoguePanel}, defaulting to defaultDialogueManager");
                 return defaultDialogueManager;

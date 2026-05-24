@@ -7,35 +7,48 @@ using DG.Tweening;
 
 public class DialogueManager : MonoBehaviour
 {
-    // public Queue<Dialogue> sentences = new Queue<Dialogue>();
+    // State
     public bool currentlyInDialogue = false;
     public bool currentlyTyping = false;
-
     public bool showUI = false;
+    public bool append = false; // if true, the current sentence will not be cleared when a new line is displayed
 
-    public string currentSpeaker;
-    public string currentSentence;
-    public int currentSentenceLength;
+    // private state
+    private string targetSpeaker;
+    private string targetSentence;
+    private int targetSentenceLength;
+    private Action _onComplete;
 
+    // gameobject refs
     public TextMeshProUGUI speakerText;
     public TextMeshProUGUI speechText;
     public CanvasGroup dialoguePanel;
+    
+    // indicator
+    public bool useNextIndicator = false;
+    public Image nextIndicator;
 
-    public float textDelay = 0.01f;
-    public bool append = false; // if true, the current sentence will not be cleared when a new line is displayed
+    public ScrollRect scrollRect;
 
-    private Action _onComplete;
+    public float defaultTextDelay = 0.01f;
 
     void Start()
     {
-        showUI = false;
+        
         dialoguePanel.alpha = 0f;
+
         speakerText.text = "";
         speechText.text = "";
-        currentSpeaker = "";
-        currentSentence = "";
+        targetSpeaker = "";
+        targetSentence = "";
+
+        targetSentenceLength = 0;
         currentlyInDialogue = false;
         currentlyTyping = false;
+        showUI = false;
+        append = false;
+
+        HideIndicator();
     }
 
     void OnEnable()
@@ -55,12 +68,10 @@ public class DialogueManager : MonoBehaviour
     {
         if (currentlyInDialogue)
         {
+            Debug.Log("DialogueManager detected click during dialogue");
             if (currentlyTyping)
             {
-                StopAllCoroutines();
-                Debug.Log($"Typing sentence length: {currentSentenceLength}");
-                speechText.maxVisibleCharacters = currentSentenceLength;
-                currentlyTyping = false;
+                SkipTyping();
             }
             else
             {
@@ -73,12 +84,7 @@ public class DialogueManager : MonoBehaviour
     {
         if (!append)
         {
-            speakerText.text = "";
-            speechText.text = "";
-            speechText.maxVisibleCharacters = 0;
-            currentSpeaker = "";
-            currentSentence = "";
-            currentSentenceLength = 0;
+            ClearDialogue();
         }
     }
 
@@ -117,6 +123,7 @@ public class DialogueManager : MonoBehaviour
                 .DOFade(0f, duration)
                 .OnComplete(() =>
                 {
+                    Debug.Log("Hiding dialogue panel on complete");
                     dialoguePanel.gameObject.SetActive(false);
                     ClearDialogue();
                     showUI = false;
@@ -139,13 +146,15 @@ public class DialogueManager : MonoBehaviour
         speakerText.text = "";
         speechText.text = "";
         speechText.maxVisibleCharacters = 0;
-        currentSpeaker = "";
-        currentSentence = "";
-        currentSentenceLength = 0;
+        targetSpeaker = "";
+        targetSentence = "";
+        targetSentenceLength = 0;
+        HideIndicator();
+
         onComplete?.Invoke();
     }
 
-    public void DisplayNextSentence(string speaker, string sentence, float textDelay = 0.01f, bool append = false, Action onComplete = null)
+    public void DisplayNextSentence(string speaker, string sentence, float? textDelay = null, bool append = false, Action onComplete = null)
     {
         if (!showUI)
         {
@@ -153,19 +162,19 @@ public class DialogueManager : MonoBehaviour
         }
 
         _onComplete = onComplete;
-        currentSpeaker = speaker;
-        currentSentence += sentence;
-        this.textDelay = textDelay;
+        targetSpeaker = speaker;
+        targetSentence = this.append ? speechText.text + sentence : sentence;
+
         this.append = append;
 
         speakerText.text = speaker;
 
         currentlyInDialogue = true;
         StopAllCoroutines();
-        StartCoroutine(TypeSentence(currentSpeaker, currentSentence));
+        StartCoroutine(TypeSentence(targetSpeaker, targetSentence, textDelay ?? defaultTextDelay));
     }
 
-    IEnumerator TypeSentence(string speaker, string sentence)
+    IEnumerator TypeSentence(string speaker, string sentence, float textDelay)
     {
         speakerText.text = speaker;
         currentlyTyping = true;
@@ -176,9 +185,10 @@ public class DialogueManager : MonoBehaviour
 
         speechText.text = sentence;  
         speechText.ForceMeshUpdate();
+
         int totalChars = speechText.textInfo.characterCount;
-        currentSentenceLength = totalChars;
-              
+        targetSentenceLength = totalChars;
+    
         int prevMaxVisible = speechText.maxVisibleCharacters;
 
         Debug.Log($"Total characters in sentence: {totalChars}, starting from: {prevMaxVisible}");
@@ -186,31 +196,79 @@ public class DialogueManager : MonoBehaviour
         for (int i = prevMaxVisible + 1; i <= totalChars; i++)
         {
             speechText.maxVisibleCharacters = i;
+            ScrollToBottom();
             yield return new WaitForSeconds(textDelay);
         }
 
         currentlyTyping = false;
+        ScrollToBottom();
+
+        if (useNextIndicator)
+        {
+            ShowIndicator();
+        }
     }
 
-    // public int GetSentenceLength(string sentence)
-    // {
-    //     int counter = 0;
-    //     for (int i = 0; i < sentence.Length; i++)
-    //     {
-    //         if (sentence[i] == '<')
-    //         {
-    //             int closingIndex = sentence.IndexOf('>', i);
-    //             if (closingIndex != -1)
-    //             {
-    //                 i = closingIndex; 
-    //                 continue;
-    //             }
-    //         }
+    private void PositionIndicator()
+    {
+        speechText.ForceMeshUpdate();
+        var textInfo = speechText.textInfo;
 
-    //         counter++;
-    //     }
-    //     return counter;
-    // }
+        var localPos = Vector3.zero;
+
+        // Walk backwards to find the last visible character
+        for (int i = speechText.maxVisibleCharacters - 1; i >= 0; i--)
+        {
+            var charInfo = textInfo.characterInfo[i];
+            if (!charInfo.isVisible) continue;
+
+            localPos = charInfo.topRight;
+            break;
+        }
+
+        var lineCount = textInfo.lineCount;
+        var lineInfo = textInfo.lineInfo[lineCount - 1];
+
+        var lineHeight = lineInfo.lineHeight;
+        var descender = lineInfo.descender;
+
+        Debug.Log("lineHeight: " + lineHeight);
+        localPos.y = lineInfo.descender + lineHeight / 2f;
+        localPos.x += 25f;
+
+        Vector3 worldPos = speechText.transform.TransformPoint(localPos);
+        nextIndicator.transform.position = worldPos;
+    }
+
+    private void ShowIndicator()
+    {
+        if (!useNextIndicator) return;
+        
+        DOTween.Kill(nextIndicator);
+        nextIndicator.gameObject.SetActive(true);
+        PositionIndicator();
+        nextIndicator.DOFade(0f, 0.6f)
+            .From(1f)
+            .SetLoops(-1, LoopType.Yoyo)
+            .SetEase(Ease.InOutSine);
+    }
+
+    private void HideIndicator()
+    {
+        if (!useNextIndicator) return;
+
+        DOTween.Kill(nextIndicator);
+        nextIndicator.gameObject.SetActive(false);
+    }
+
+    void SkipTyping()
+    {
+        StopAllCoroutines();
+        speechText.maxVisibleCharacters = targetSentenceLength;
+        currentlyTyping = false;
+        ScrollToBottom();
+        ShowIndicator();
+    }
 
     void CompleteLine()
     {
@@ -218,5 +276,15 @@ public class DialogueManager : MonoBehaviour
         _onComplete = null;         
         callback?.Invoke();
         currentlyInDialogue = false;
+        HideIndicator();
+    }
+
+    private void ScrollToBottom()
+    {
+        if (!scrollRect) return;
+
+        // Must happen after layout updates — defer to end of frame
+        Canvas.ForceUpdateCanvases();
+        scrollRect.verticalNormalizedPosition = 0f;
     }
 }
