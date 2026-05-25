@@ -123,8 +123,7 @@
           "jumpTargetId": "poster",
           "hideOnFlag": "poster"
         }
-      ],
-      "choiceEndJumpTargetId": "prologueChoiceEnd"
+      ]
     },
     {
       "id": "nameCard",
